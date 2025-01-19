@@ -2,12 +2,19 @@
 
 This is a short guide on how to set up a Talos single node cluster.  
 It is based on the [official talos documentation](https://www.talos.dev/v1.9/talos-guides/install/virtualized-platforms/hyper-v/#pushing-config-to-the-nodes).  
-All required tools like talosctl, kubectl or the talos ios image are included in this repo.  
-Clone the repo and you can start the setup.
+Clone the repo and and download tools to start the setup.
 
 ```powershell
 git clone https://github.com/bihalu/talos.git
 cd talos
+wget https://github.com/siderolabs/talos/releases/download/v1.9.2/metal-amd64.iso -OutFile metal-amd64.iso
+wget https://github.com/siderolabs/talos/releases/download/v1.9.2/talosctl-windows-amd64.exe -OutFile talosctl.exe
+wget https://dl.k8s.io/release/v1.32.0/bin/windows/amd64/kubectl.exe -OutFile kubectl.exe
+wget https://github.com/derailed/k9s/releases/download/v0.32.7/k9s_Windows_amd64.zip -OutFile k9s_Windows_amd64.zip
+Expand-Archive k9s_Windows_amd64.zip -DestinationPath tmp
+copy tmp/k9s.exe .
+Remove-Item -Recurse -Force tmp
+Remove-Item k9s_Windows_amd64.zip
 ```
 
 ## Setup VM
