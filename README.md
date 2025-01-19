@@ -2,7 +2,7 @@
 
 This is a short guide on how to set up a Talos single node cluster.  
 It is based on the [official talos documentation](https://www.talos.dev/v1.9/talos-guides/install/virtualized-platforms/hyper-v/#pushing-config-to-the-nodes).  
-Clone the repo and and download tools to start the setup.
+First clone the repo and and download tools.
 
 ```powershell
 git clone https://github.com/bihalu/talos.git
@@ -15,6 +15,7 @@ Expand-Archive k9s_Windows_amd64.zip -DestinationPath tmp
 copy tmp/k9s.exe .
 Remove-Item -Recurse -Force tmp
 Remove-Item k9s_Windows_amd64.zip
+
 ```
 
 ## Setup VM
@@ -44,6 +45,7 @@ talosctl gen config talos-cluster https://$($CONTROL_PLANE_IP):6443 --output-dir
 
 # Apply config to control plane node
 talosctl apply-config --insecure --nodes $CONTROL_PLANE_IP --file .\controlplane.yaml
+
 ```
 
 > Now talos VM is installing and after a minute stage should be booting, kubelet healthy and connectivity OK.
@@ -63,6 +65,7 @@ talosctl config node $CONTROL_PLANE_IP
 
 # Bootstrap cluster
 talosctl bootstrap
+
 ```
 > Bootstrap takes a few minutes. Wait until stage is running and ready.
 
@@ -73,6 +76,7 @@ talosctl kubeconfig .
 # Copy kubeconfig
 mkdir -p ~/.kube
 cp kubeconfig ~/.kube/config
+
 ```
 
 
@@ -80,6 +84,7 @@ Finaly you can access your cluster with k9s tool.
 
 ```powershell
 k9s
+
 ```
 
 ![k9s](./k9s.png)
