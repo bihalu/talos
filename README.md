@@ -19,14 +19,15 @@ Remove-Item k9s_Windows_amd64.zip
 
 ## Setup VM
 
-* launch hyper-v manager
+* launch hyper-v manager -> virtmgmt.msc
 * new vm
 * name talos
 * generation 2
 * memory 4GB (no dynamic)
 * network default switch
 * hard disk 40GB
-* mount iso -> metal-amd64-v1.9.2-dirty.iso
+* mount iso -> metal-amd64.iso
+* settings firmware boot order -> 1. dvd, 2. disk, 3. network
 * settings security disable secure boot
 * connect and boot
 
@@ -36,7 +37,7 @@ Remove-Item k9s_Windows_amd64.zip
 
 ```powershell
 # set control plane IP variable
-$CONTROL_PLANE_IP='172.26.92.74'
+$CONTROL_PLANE_IP='172.26.91.19'
 
 # Generate talos config
 talosctl gen config talos-cluster https://$($CONTROL_PLANE_IP):6443 --output-dir .
@@ -62,7 +63,10 @@ talosctl config node $CONTROL_PLANE_IP
 
 # Bootstrap cluster
 talosctl bootstrap
+```
+> Bootstrap takes a few minutes. Wait until stage is running and ready.
 
+```powershell
 # Generate kubeconfig
 talosctl kubeconfig .
 
@@ -71,7 +75,6 @@ mkdir -p ~/.kube
 cp kubeconfig ~/.kube/config
 ```
 
-> Bootstrap takes a few minutes. Wait until stage is running and ready.
 
 Finaly you can access your cluster with k9s tool.
 
