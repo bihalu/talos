@@ -4,6 +4,11 @@ talosconfig
 worker.yaml
 kubectl.exe
 talosctl.exe
+helm.exe
+helm-v3.17.0-windows-amd64.zip
 k9s.exe
 k9s_Windows_amd64.zip
 tmp/
+metal-amd64.iso
+csi-driver-nfs-v4.9.0.tgz
+wordpress-24.1.7.tgz
