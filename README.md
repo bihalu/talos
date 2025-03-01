@@ -1,8 +1,11 @@
 # Talos single node cluster
 
-This is a short guide on how to set up a Talos single node cluster.  
+This is a short guide on how to setup a Talos single node cluster.  
 It is based on the [official talos documentation](https://www.talos.dev/v1.9/talos-guides/install/virtualized-platforms/hyper-v/#pushing-config-to-the-nodes).  
-First clone the repo and and download tools.
+
+## Preperation
+
+First clone this repo and and download required tools.
 
 ```powershell
 git clone https://github.com/bihalu/talos.git
@@ -40,13 +43,92 @@ Remove-Item helm-v3.17.0-windows-amd64.zip
 
 ## Install talos
 
+### Generate talos config
+
 ```powershell
 # set control plane IP variable
 $CONTROL_PLANE_IP='172.26.91.19'
 
 # Generate talos config
 ./talosctl gen config talos-cluster https://$($CONTROL_PLANE_IP):6443 --output-dir .
+```
 
+### Modify talos config file controlplane.yaml
+
+### Add machine -> kubelet -> extramounts
+
+```yaml
+machine:
+    kubelet:
+        extraMounts:
+        - destination: /var/local/nfs
+          type: bind
+          source: /var/local/nfs
+          options:
+          - rbind
+          - rshared
+          - rw
+
+```
+
+### Set machine -> install -> image
+
+```yaml
+machine:
+    install:
+        image: docker.io/bihalu/installer:v1.9.2-dirty
+
+```
+
+### Add machine -> pods
+
+```yaml
+machine:
+    pods:
+    - apiVersion: v1
+      kind: Pod
+      metadata:
+        name: nfs-server
+        namespace: kube-system
+        labels:
+          app: nfs-server
+      spec:
+        containers:
+        - name: nfs-server
+          image: docker.io/itsthenetwork/nfs-server-alpine:12
+          ports:
+          - name: tcp-2049 
+            containerPort: 2049
+            protocol: TCP
+          - name: udp-111
+            containerPort: 111
+            protocol: UDP
+          volumeMounts:
+          - mountPath: /data
+            name: nfs-storage
+          env:
+          - name: SHARED_DIRECTORY
+            value: /data
+          securityContext:
+            privileged: true
+        volumes:
+        - name: nfs-storage
+          hostPath:
+            path: /var/local/nfs
+            type: DirectoryOrCreate
+
+```
+
+### Set cluster -> allowSchedulingOnControlPlanes
+
+```yaml
+cluster:
+    allowSchedulingOnControlPlanes: true
+```
+
+### Apply talos config
+
+```powershell
 # Apply config to control plane node
 ./talosctl apply-config --insecure --nodes $CONTROL_PLANE_IP --file .\controlplane.yaml
 
@@ -83,92 +165,9 @@ cp kubeconfig ~/.kube/config
 
 ```
 
-
-Finaly you can access your cluster with k9s tool.
-
-```powershell
-./k9s
-
-```
-
-![k9s](./k9s.png)
-
-## Finish
-
-```powershell
-./kubectl taint nodes talos-2f9-lvy node-role.kubernetes.io/control-plane=:NoSchedule-
-```
-
-> Shutdown the VM and unmount iso, so that the next time you don't boot from the iso.  
-  In addition, it makes sense to create a snapshot of the VM.
-
-Now have fun with your single node talos cluster ;-)
-
 ## Storage
 
-add machine->kubelet->extramounts to controlplane.yaml
-
-```yaml
-machine:
-    kubelet:
-        extraMounts:
-        - destination: /var/local/nfs
-          type: bind
-          source: /var/local/nfs
-          options:
-          - rbind
-          - rshared
-          - rw
-
-```
-
-add machine->pods to controlplane.yaml
-
-```yaml
-machine:
-    pods:
-        - apiVersion: v1
-          kind: Pod
-          metadata:
-            name: nfs-server
-            namespace: kube-system
-          labels:
-            app: nfs-server
-          spec:
-            containers:
-            - name: nfs-server
-              image: docker.io/itsthenetwork/nfs-server-alpine:12
-              ports:
-              - name: tcp-2049 
-                containerPort: 2049
-                protocol: TCP
-              - name: udp-111
-                containerPort: 111
-                protocol: UDP
-              volumeMounts:
-              - mountPath: /data
-                name: nfs-storage
-              env:
-              - name: SHARED_DIRECTORY
-                value: /data
-                securityContext:
-                privileged: true
-            volumes:
-            - hostPath:
-              path: /var/local/nfs
-              type: DirectoryOrCreate
-              name: nfs-storage
-
-```
-
-apply config
-
-```powershell
-./talosctl apply-config -f controlplane.yaml
-
-```
-
-install csi-driver-nfs
+### install csi-driver-nfs
 
 ```powershell
 ./helm repo add csi-driver-nfs https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
@@ -183,9 +182,26 @@ install csi-driver-nfs
 
 ```
 
-## Wordpress
+Finaly you can access your cluster with k9s tool.
 
-install wordpress helmchart
+```powershell
+./k9s
+
+```
+
+![k9s](./k9s.png)
+
+## Finish
+
+> Shutdown the VM and unmount iso, so that the next time you don't boot from the iso.  
+  In addition, it makes sense to create a snapshot of the VM.
+
+Now have fun with your single node talos cluster ;-)
+
+
+## Bonus
+
+### Install sample app wordpress via helmchart
 
 ```powershell
 ./helm repo add bitnami https://charts.bitnami.com/bitnami
