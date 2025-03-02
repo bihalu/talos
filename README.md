@@ -13,6 +13,7 @@ cd talos
 wget https://github.com/siderolabs/talos/releases/download/v1.9.2/metal-amd64.iso -OutFile metal-amd64.iso
 wget https://github.com/siderolabs/talos/releases/download/v1.9.2/talosctl-windows-amd64.exe -OutFile talosctl.exe
 wget https://dl.k8s.io/release/v1.32.0/bin/windows/amd64/kubectl.exe -OutFile kubectl.exe
+wget https://github.com/mikefarah/yq/releases/download/v4.45.1/yq_windows_amd64.exe -OutFile yq.exe
 wget https://github.com/derailed/k9s/releases/download/v0.32.7/k9s_Windows_amd64.zip -OutFile k9s_Windows_amd64.zip
 wget https://get.helm.sh/helm-v3.17.0-windows-amd64.zip -OutFile helm-v3.17.0-windows-amd64.zip
 Expand-Archive k9s_Windows_amd64.zip -DestinationPath tmp

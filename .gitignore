@@ -5,6 +5,7 @@ worker.yaml
 kubectl.exe
 talosctl.exe
 helm.exe
+yq.exe
 helm-v3.17.0-windows-amd64.zip
 k9s.exe
 k9s_Windows_amd64.zip
