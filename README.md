@@ -5,7 +5,7 @@ It is based on the [official talos documentation](https://www.talos.dev/v1.9/tal
 
 ## Preperation
 
-First clone this repo and and download required tools.
+First clone this repo and download required tools.
 
 ```powershell
 git clone https://github.com/bihalu/talos.git
@@ -137,8 +137,6 @@ cluster:
 
 > Now talos VM is installing and after a minute stage should be booting, kubelet healthy and connectivity OK.
 
-![booting](./booting.png)
-
 ## Bootstrap cluster
 
 ```powershell
@@ -155,6 +153,8 @@ cp talosconfig ~/.talos/config
 
 ```
 > Bootstrap takes a few minutes. Wait until stage is running and ready.
+
+![booting](./booting.png)
 
 ```powershell
 # Generate kubeconfig
