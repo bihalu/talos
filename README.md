@@ -76,7 +76,7 @@ machine:
 ```yaml
 machine:
     install:
-        image: docker.io/bihalu/installer:v1.9.2-dirty
+        image: factory.talos.dev/metal-installer/89b50c59f01a5ec3946078c1e4474c958b6f7fe9064654e15385ad1ad73f536c:v1.10.5
 
 ```
 
