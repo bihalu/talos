@@ -7,36 +7,31 @@ It is based on the [official talos documentation](https://www.talos.dev/v1.10/ta
 
 First clone this repo and download required tools.
 
-```powershell
+```bash
 git clone https://github.com/bihalu/talos.git
 cd talos
-wget https://factory.talos.dev/image/89b50c59f01a5ec3946078c1e4474c958b6f7fe9064654e15385ad1ad73f536c/v1.10.5/metal-amd64.iso -OutFile metal-amd64.iso
-wget https://github.com/siderolabs/talos/releases/download/v1.10.5/talosctl-windows-amd64.exe -OutFile talosctl.exe
-wget https://dl.k8s.io/release/v1.33.2/bin/windows/amd64/kubectl.exe -OutFile kubectl.exe
-wget https://github.com/mikefarah/yq/releases/download/v4.45.1/yq_windows_amd64.exe -OutFile yq.exe
-wget https://github.com/derailed/k9s/releases/download/v0.50.9/k9s_Windows_amd64.zip -OutFile k9s_Windows_amd64.zip
-wget https://get.helm.sh/helm-v3.17.0-windows-amd64.zip -OutFile helm-v3.17.0-windows-amd64.zip
-Expand-Archive k9s_Windows_amd64.zip -DestinationPath tmp
-Expand-Archive helm-v3.17.0-windows-amd64.zip -DestinationPath tmp
-copy tmp/k9s.exe .
-copy tmp/windows-amd64/helm.exe .
-Remove-Item -Recurse -Force tmp
-Remove-Item k9s_Windows_amd64.zip
-Remove-Item helm-v3.17.0-windows-amd64.zip
+wget https://factory.talos.dev/image/89b50c59f01a5ec3946078c1e4474c958b6f7fe9064654e15385ad1ad73f536c/v1.10.5/metal-amd64.iso
+wget https://github.com/siderolabs/talos/releases/download/v1.10.5/talosctl-linux-amd64 -O talosctl
+chmod +x talosctl
+wget https://dl.k8s.io/release/v1.33.2/bin/linux/amd64/kubectl
+chmod +x kubectl
+sudo apt install -y yq
+wget https://github.com/derailed/k9s/releases/download/v0.50.9/k9s_linux_amd64.deb
+sudo dpkg --install k9s_linux_amd64.deb
+wget https://get.helm.sh/helm-v3.17.4-linux-amd64.tar.gz -O - | tar Cxzf /tmp - && cp /tmp/linux-amd64/helm .
+
 ```
 
 ## Setup VM
 
-* launch hyper-v manager -> virtmgmt.msc
-* new vm
+* launch QEMU/KVM
+* new vm (generic linux)
+* iso -> metal-amd64.iso
 * name talos
-* generation 2
-* memory 4GB (no dynamic)
+* memory 4GB
 * network default switch
 * hard disk 40GB
-* mount iso -> metal-amd64.iso
-* settings firmware boot order -> 1. dvd, 2. disk, 3. network
-* settings security disable secure boot
+* settings boot order -> 1. SATA CDROM, 2. VirtIO disk
 * connect and boot
 
 > Take note of control plane ip-address, you have to set it next.
@@ -45,12 +40,13 @@ Remove-Item helm-v3.17.0-windows-amd64.zip
 
 ### Generate talos config
 
-```powershell
+```bash
 # set control plane IP variable
-$CONTROL_PLANE_IP='172.26.91.19'
+export CONTROL_PLANE_IP='192.168.122.2'
 
 # Generate talos config
-./talosctl gen config talos-cluster https://$($CONTROL_PLANE_IP):6443 --output-dir .
+./talosctl gen config talos-cluster https://$CONTROL_PLANE_IP:6443 --output-dir .
+
 ```
 
 ### Modify talos config file controlplane.yaml
@@ -76,7 +72,8 @@ machine:
 ```yaml
 machine:
     install:
-        image: docker.io/bihalu/installer:v1.9.2-dirty
+        disk: /dev/vda
+        image: factory.talos.dev/metal-installer/89b50c59f01a5ec3946078c1e4474c958b6f7fe9064654e15385ad1ad73f536c:v1.10.5
 
 ```
 
@@ -128,9 +125,9 @@ cluster:
 
 ### Apply talos config
 
-```powershell
+```bash
 # Apply config to control plane node
-./talosctl apply-config --insecure --nodes $CONTROL_PLANE_IP --file .\controlplane.yaml
+./talosctl apply-config --insecure --nodes $CONTROL_PLANE_IP --file controlplane.yaml
 
 ```
 
@@ -138,7 +135,7 @@ cluster:
 
 ## Bootstrap cluster
 
-```powershell
+```bash
 # Copy talosconfig
 mkdir -p ~/.talos
 cp talosconfig ~/.talos/config
@@ -169,12 +166,12 @@ cp kubeconfig ~/.kube/config
 
 ### install csi-driver-nfs
 
-```powershell
+```bash
 ./helm repo add csi-driver-nfs https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
 
-./helm pull csi-driver-nfs/csi-driver-nfs --version v4.9.0
+./helm pull csi-driver-nfs/csi-driver-nfs --version v4.11.0
 
-./helm upgrade --install csi-driver-nfs csi-driver-nfs-v4.9.0.tgz --namespace kube-system --version v4.9.0
+./helm upgrade --install csi-driver-nfs csi-driver-nfs-4.11.0.tgz --namespace kube-system --version v4.11.0
 
 ./kubectl apply -f nfs-server-service.yaml
 
@@ -184,7 +181,7 @@ cp kubeconfig ~/.kube/config
 
 Finaly you can access your cluster with k9s tool.
 
-```powershell
+```bash
 ./k9s
 
 ```
@@ -203,7 +200,7 @@ Now have fun with your single node talos cluster ;-)
 
 ### Install sample app wordpress via helmchart
 
-```powershell
+```bash
 ./helm repo add bitnami https://charts.bitnami.com/bitnami
 
 ./helm pull bitnami/wordpress --version 24.1.7

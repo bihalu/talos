@@ -12,4 +12,9 @@ k9s_Windows_amd64.zip
 tmp/
 metal-amd64.iso
 csi-driver-nfs-v4.9.0.tgz
+csi-driver-nfs-4.11.0.tgz
 wordpress-24.1.7.tgz
+k9s_linux_amd64.deb
+kubectl
+talosctl
+helm
