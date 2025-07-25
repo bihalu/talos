@@ -1,0 +1,57 @@
+machine:
+  install:
+    disk: /dev/sda
+    image: factory.talos.dev/metal-installer/89b50c59f01a5ec3946078c1e4474c958b6f7fe9064654e15385ad1ad73f536c:v1.10.5
+
+  kubelet:
+    extraMounts:
+    - destination: /var/local/nfs
+      type: bind
+      source: /var/local/nfs
+      options:
+      - rbind
+      - rshared
+      - rw
+
+  pods:
+  - apiVersion: v1
+    kind: Pod
+    metadata:
+      name: nfs-server
+      namespace: kube-system
+      labels:
+        app: nfs-server
+    spec:
+      containers:
+      - name: nfs-server
+        image: docker.io/itsthenetwork/nfs-server-alpine:12
+        ports:
+        - name: tcp-2049
+          containerPort: 2049
+          protocol: TCP
+        - name: udp-111
+          containerPort: 111
+          protocol: UDP
+        volumeMounts:
+        - mountPath: /data
+          name: nfs-storage
+        env:
+        - name: SHARED_DIRECTORY
+          value: /data
+        securityContext:
+          privileged: true
+      volumes:
+      - name: nfs-storage
+        hostPath:
+          path: /var/local/nfs
+          type: DirectoryOrCreate
+
+cluster:
+  allowSchedulingOnControlPlanes: true
+
+  network:
+    cni:
+      name: custom
+      urls:
+      - https://raw.githubusercontent.com/projectcalico/calico/v3.30.2/manifests/tigera-operator.yaml
+      - https://raw.githubusercontent.com/projectcalico/calico/v3.30.2/manifests/custom-resources.yaml

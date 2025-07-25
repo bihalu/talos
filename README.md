@@ -23,6 +23,7 @@ copy tmp/windows-amd64/helm.exe .
 Remove-Item -Recurse -Force tmp
 Remove-Item k9s_Windows_amd64.zip
 Remove-Item helm-v3.17.0-windows-amd64.zip
+
 ```
 
 ## Setup VM
@@ -49,81 +50,9 @@ Remove-Item helm-v3.17.0-windows-amd64.zip
 # set control plane IP variable
 $CONTROL_PLANE_IP='172.26.91.19'
 
-# Generate talos config
-./talosctl gen config talos-cluster https://$($CONTROL_PLANE_IP):6443 --output-dir .
-```
+# Generate and patch talos config
+./talosctl gen config talos-cluster https://$($CONTROL_PLANE_IP):6443 --output-dir . --force --config-patch-control-plane "@patch-hyperv.yaml"
 
-### Modify talos config file controlplane.yaml
-
-### Add machine -> kubelet -> extramounts
-
-```yaml
-machine:
-    kubelet:
-        extraMounts:
-        - destination: /var/local/nfs
-          type: bind
-          source: /var/local/nfs
-          options:
-          - rbind
-          - rshared
-          - rw
-
-```
-
-### Set machine -> install -> image
-
-```yaml
-machine:
-    install:
-        image: factory.talos.dev/metal-installer/89b50c59f01a5ec3946078c1e4474c958b6f7fe9064654e15385ad1ad73f536c:v1.10.5
-
-```
-
-### Add machine -> pods
-
-```yaml
-machine:
-    pods:
-    - apiVersion: v1
-      kind: Pod
-      metadata:
-        name: nfs-server
-        namespace: kube-system
-        labels:
-          app: nfs-server
-      spec:
-        containers:
-        - name: nfs-server
-          image: docker.io/itsthenetwork/nfs-server-alpine:12
-          ports:
-          - name: tcp-2049 
-            containerPort: 2049
-            protocol: TCP
-          - name: udp-111
-            containerPort: 111
-            protocol: UDP
-          volumeMounts:
-          - mountPath: /data
-            name: nfs-storage
-          env:
-          - name: SHARED_DIRECTORY
-            value: /data
-          securityContext:
-            privileged: true
-        volumes:
-        - name: nfs-storage
-          hostPath:
-            path: /var/local/nfs
-            type: DirectoryOrCreate
-
-```
-
-### Set cluster -> allowSchedulingOnControlPlanes
-
-```yaml
-cluster:
-    allowSchedulingOnControlPlanes: true
 ```
 
 ### Apply talos config
@@ -172,9 +101,11 @@ cp kubeconfig ~/.kube/config
 ```powershell
 ./helm repo add csi-driver-nfs https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
 
-./helm pull csi-driver-nfs/csi-driver-nfs --version v4.9.0
+./helm repo update
 
-./helm upgrade --install csi-driver-nfs csi-driver-nfs-v4.9.0.tgz --namespace kube-system --version v4.9.0
+./helm pull csi-driver-nfs/csi-driver-nfs --version 4.11.0
+
+./helm upgrade --install csi-driver-nfs csi-driver-nfs-4.11.0.tgz --namespace kube-system --version 4.11.0
 
 ./kubectl apply -f nfs-server-service.yaml
 
@@ -205,6 +136,8 @@ Now have fun with your single node talos cluster ;-)
 
 ```powershell
 ./helm repo add bitnami https://charts.bitnami.com/bitnami
+
+./helm repo update
 
 ./helm pull bitnami/wordpress --version 24.1.7
 
